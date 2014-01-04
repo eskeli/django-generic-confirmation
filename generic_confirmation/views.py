@@ -43,18 +43,24 @@ def confirm_by_form(request, template_name='confirm.html',
 def confirm_by_get(request, token, template_name='confirm.html', 
                    success_template_name="confirmed.html", 
                    success_url=None, success_message=None,
+                   expired_template_name="confirm_expired.html",
+                   expired_message=None,
                    form_class=ConfirmationForm):
     form = form_class({'token': token})
     if form.is_valid():
-        form.save()
-        if success_url is None:
-            return render_to_response(success_template_name, 
-                    {'success_message': success_message}, 
-                    context_instance=RequestContext(request))
+        if form.save():
+            if success_url is None:
+                return render_to_response(success_template_name, 
+                        {'success_message': success_message}, 
+                        context_instance=RequestContext(request))
+            else:
+                if success_message is not None:
+                    messages.add_message(request, messages.SUCCESS, success_message)
+                return HttpResponseRedirect(success_url)
         else:
-            if success_message is not None:
-                messages.add_message(request, messages.SUCCESS, success_message)
-            return HttpResponseRedirect(success_url)
+            return render_to_response(expired_template_name, 
+                        {'expired_message': expired_message}, 
+                        context_instance=RequestContext(request))
     else:
         return render_to_response(template_name, {}, 
                                   context_instance=RequestContext(request))
