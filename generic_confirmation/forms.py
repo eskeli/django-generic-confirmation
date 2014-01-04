@@ -4,7 +4,7 @@ from django.db import models
 from generic_confirmation.models import DeferredAction
 from generic_confirmation.main import LONG
 from generic_confirmation import signals
-
+from generic_confirmation.settings import EXPIRE_OLD
 
 
 class DeferredFormMixIn(object):
@@ -17,6 +17,7 @@ class DeferredFormMixIn(object):
     """
     
     token_format = LONG
+    expire_old = EXPIRE_OLD
     
     def _gen_token(self, format=None, step=0):
         """
@@ -47,6 +48,10 @@ class DeferredFormMixIn(object):
 
         form_class_name = u"%s.%s" % (self.__class__.__module__, 
                                       self.__class__.__name__)
+                                      
+        # Changes valid_until of old not expired confirmations of the same object to now() 
+        if self.expire_old and self.instance:
+            DeferredAction.objects.make_old_expire(self.instance)
 
         # we save the uncleaned data here, because form.full_clean() will 
         # alter the data in cleaned_data and a second run with cleaned_data as 

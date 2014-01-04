@@ -27,6 +27,12 @@ class ConfirmationManager(models.Manager):
         return self.exclude(confirmed=True).filter(content_type=ct, 
                 object_pk=instance.pk).filter(
                 Q(valid_until__gt=now) | Q(valid_until__isnull=True)).count()
+                
+    def make_old_expire(self, instance):
+        """ Changes valid_until of old not expired confirmations of the same object to now() """
+        ct = ContentType.objects.get_for_model(instance)
+        now = timezone.now()
+        self.filter(content_type=ct, object_pk=instance.pk).filter(Q(valid_until__lt=now) | Q(valid_until__isnull=True)).update(valid_until=now)
 
 
 class DeferredAction(models.Model):
