@@ -48,7 +48,11 @@ def confirm_by_get(request, token, template_name='confirm.html',
                    form_class=ConfirmationForm):
     form = form_class({'token': token})
     if form.is_valid():
-        if form.save():
+        try:
+            form_save = form.save()
+        except:
+            form_save = False
+        if form_save:
             if success_url is None:
                 return render_to_response(success_template_name, 
                         {'success_message': success_message}, 
